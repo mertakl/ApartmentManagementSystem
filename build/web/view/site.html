@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css"
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/locale/locale-tr.js"></script>
+    </head>     
+    <body>
+        <script>
+            Ext.onReady(function () {
+
+                ////Telefon numara formatı///////////
+                Ext.apply(Ext.form.VTypes, {
+                    'phoneText': 'Telefon geçerli değil.(xxx) xxx-xxxx formatında olmalı.',
+                    'phoneMask': /[\-\+0-9\(\)\s\.Ext]/,
+                    'phoneRe': /^(\({1}[0-9]{3}\){1}\s{1})([0-9]{3}[-]{1}[0-9]{4})$|^(((\+44)? ?(\(0\))? ?)|(0))( ?[0-9]{3,4}){3}$|^Ext. [0-9]+$/,
+                    'phone': function (v) {
+                        return this.phoneRe.test(v);
+                    }
+                });
+                Ext.apply(Ext.util.Format, {
+                    phoneNumber: function (value) {
+                        var phoneNumber = value.replace(/\./g, '').replace(/-/g, '').replace(/[^0-9]/g, '');
+                        if (phoneNumber != '' && phoneNumber.length == 10) {
+                            return '(' + phoneNumber.substr(0, 3) + ') ' + phoneNumber.substr(3, 3) + '-' + phoneNumber.substr(6, 4);
+                        } else {
+                            return value;
+                        }
+                    }
+                });
+                Ext.namespace('Ext.ux.plugin');
+                // Plugin to format a phone number on value change
+                Ext.ux.plugin.FormatPhoneNumber = Ext.extend(Ext.form.TextField, {
+                    init: function (c) {
+                        c.on('change', this.onChange, this);
+                    },
+                    onChange: function (c) {
+                        c.setValue(Ext.util.Format.phoneNumber(c.getValue()));
+                    }
+                });
+                ////Telefon numara formatı///////////
+                //
+                //
+                /////////////Apartman listele//////////////////////      
+                var aptrecords = [];
+
+                //create extjs store with empty data
+                var aptstore = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'apartman_no', 'daire_sayisi', 'kat_sayisi', 'asansör_sayisi', 'oturan_sayisi'],
+                    data: aptrecords,
+                    paging: false
+                });
+
+
+                Ext.Ajax.request({
+                    url: '../rest/service/getApartman',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            aptrecords.push({'id': jsonResp[i].id, 'apartman_no': jsonResp[i].apartman_no, 'daire_sayisi': jsonResp[i].daire_sayisi, 'kat_sayisi': jsonResp[i].kat_sayisi, 'asansör_sayisi': jsonResp[i].asansör_sayisi, 'oturan_sayisi': jsonResp[i].oturan_sayisi});
+                        }
+
+                        aptstore.loadData(aptrecords);
+
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+/////////////Apartman listele//////////////////////
+
+                var records = [];
+                //create extjs store with empty data
+                var store = Ext.create('Ext.data.Store', {
+                    fields: ['adi', 'adres', 'blok_sayi', 'daire_sayi', 'telefon', 'fax', 'yetkili_adi', 'yetkili_soyadi'],
+                    data: records,
+                    paging: false
+                });
+                Ext.Ajax.request({
+                    url: '../rest/service/getSite',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            records.push({'adi': jsonResp[i].adi, 'adres': jsonResp[i].adres, 'blok_sayi': jsonResp[i].blok_sayi, 'daire_sayi': jsonResp[i].daire_sayi, 'telefon': jsonResp[i].telefon, 'fax': jsonResp[i].fax, 'yetkili_adi': jsonResp[i].yetkili_adi, 'yetkili_soyadi': jsonResp[i].yetkili_soyadi});
+                        }
+
+                        store.loadData(records);
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+                var gridPanel = Ext.create('Ext.grid.Panel', {
+                    id: 'gridId',
+                    store: store,
+                    stripeRows: true,
+                    width: 600,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [{
+                                    header: "Adı",
+                                    dataIndex: 'adi',
+                                    flex: .5, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+                                    sortable: true
+                                }, {
+                                    header: "Adres",
+                                    dataIndex: 'adres',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Blok Sayısı",
+                                    dataIndex: 'blok_sayi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Daire Sayısı",
+                                    dataIndex: 'daire_sayi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Telefon",
+                                    dataIndex: 'telefon',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Fax",
+                                    dataIndex: 'fax',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Yekili Adı",
+                                    dataIndex: 'yetkili_adi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Yekili Soyadı",
+                                    dataIndex: 'yetkili_soyadi',
+                                    flex: .5,
+                                    sortable: true
+                                }],
+                    listeners: {
+                        itemclick: function (dv, record, item, index, e) {
+
+                            Ext.getCmp('adi').setValue(record.get('adi'));
+                            Ext.getCmp('adres').setValue(record.get('adres'));
+                            Ext.getCmp('blok_sayi').setValue(record.get('blok_sayi'));
+                            Ext.getCmp('daire_sayi').setValue(record.get('daire_sayi'));
+                            Ext.getCmp('telefon').setValue(record.get('telefon'));
+                            Ext.getCmp('fax').setValue(record.get('fax'));
+                            Ext.getCmp('yetkili_adi').setValue(record.get('yetkili_adi'));
+                            Ext.getCmp('yetkili_soyadi').setValue(record.get('yetkili_soyadi'));
+                            Ext.getCmp('aptpanel').show();
+                        }
+                    },
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+
+                var aptgrid = Ext.create('Ext.grid.Panel', {
+                    id: 'aptgrid',
+                    store: aptstore,
+                    stripeRows: true,
+                    width: 600,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [
+//                            {
+//                                    header: "Id",
+//                                    dataIndex: 'id',
+//                                    flex: 1, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+//                                    sortable: true
+//                                }, 
+                                {
+                                    header: "Apartman No",
+                                    dataIndex: 'apartman_no',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Daire Sayısı",
+                                    dataIndex: 'daire_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Kat Sayısı",
+                                    dataIndex: 'kat_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Asansör Sayısı",
+                                    dataIndex: 'asansör_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Oturan Sayısı",
+                                    dataIndex: 'oturan_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                }],
+
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+
+
+
+                var formPanel = Ext.create('Ext.form.Panel', {//use class for form panel
+                    width: 500,
+                    height: 400,
+                    id: 'siteFrm',
+                    layout: {//define layout types
+                        type: 'hbox',
+                        pack: 'center',
+                        align: 'center'
+                    },
+                    bodyPadding: 5,
+                    items: [
+                        {
+                            xtype: 'container',
+                            width: 300,
+                            layout: {
+                                type: 'vbox',
+                                align: 'stretch'
+                            },
+                            items: [{
+                                    xtype: 'textfield',
+                                    name: 'adi',
+                                    id: 'adi',
+                                    allowBlank: false,
+                                    fieldLabel: 'Site Adı',
+                                    margin: '10 10 10 10'
+//                                    readOnly: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'adres',
+                                    id: 'adres',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Adres'
+                                }, {
+                                    xtype: 'textfield',
+                                    name: 'blok_sayi',
+                                    margin: '10 10 10 10',
+                                    id: 'blok_sayi',
+                                    fieldLabel: 'Blok Sayısı',
+                                    readOnly: true
+                                }, {
+                                    xtype: 'textfield',
+                                    id: 'daire_sayi',
+                                    name: 'daire_sayi',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Daire Sayısı',
+                                    readOnly: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    id: 'telefon',
+                                    name: 'telefon',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Telefon',
+                                    emptyText: '(xxx) xxx-xxxx',
+                                    allowBlank: false,
+                                    vtype: 'phone',
+                                    plugins: new Ext.ux.plugin.FormatPhoneNumber(),
+                                    width: 300,
+                                    maxLength: 14,
+                                    enforceMaxLength: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    id: 'fax',
+                                    name: 'fax',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Fax',
+                                    emptyText: '(xxx) xxx-xxxx',
+                                    allowBlank: false,
+                                    vtype: 'phone',
+                                    plugins: new Ext.ux.plugin.FormatPhoneNumber(),
+                                    width: 300,
+                                    maxLength: 14,
+                                    enforceMaxLength: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'yetkili_adi',
+                                    id: 'yetkili_adi',
+                                    allowBlank: false,
+                                    fieldLabel: 'Yetkili Adı',
+                                    margin: '10 10 10 10'
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'yetkili_soyadi',
+                                    id: 'yetkili_soyadi',
+                                    allowBlank: false,
+                                    fieldLabel: 'Yekili Soyadı',
+                                    margin: '10 10 10 10'
+                                }]
+                        },
+                        {
+                            xtype: 'container',
+                            width: 100,
+                            layout: {
+                                type: 'vbox',
+                                align: 'stretch'
+                            },
+                            items: [
+                                {
+                                    xtype: 'button',
+                                    text: 'Güncelle',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'updateBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (Ext.getCmp('adi').getValue() == "") {
+                                                alert("Adı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('adres').getValue() == "") {
+                                                alert("Adres boş geçilemez!");
+                                                return;
+                                            }
+
+                                            var form = Ext.getCmp('siteFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: 'http://localhost:8080/SiteYonetim/rest/service/updateSite',
+                                                method: 'POST',
+                                                params: {
+                                                    adi: values.adi,
+                                                    adres: values.adres,
+                                                    blok_sayi: values.blok_sayi,
+                                                    daire_sayi: values.daire_sayi,
+                                                    telefon: values.telefon,
+                                                    fax: values.fax,
+                                                    yetkili_adi: values.yetkili_adi,
+                                                    yetkili_soyadi: values.yetkili_soyadi
+
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Temizle',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'clearBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            Ext.getCmp('adi').setValue("");
+                                            Ext.getCmp('adres').setValue("");
+                                            Ext.getCmp('blok_sayi').setValue("");
+                                            Ext.getCmp('daire_sayi').setValue("");
+                                            
+                                            Ext.getCmp('aptpanel').hide();
+                                        }
+                                    }
+                                }
+
+                            ]
+                        }]
+                }
+                );
+                var container = Ext.create('Ext.container.Container', {
+                    layout: 'border',
+                    width: 1920,
+                    height: 980,
+                    items: [{
+                            region: 'west',
+                            width: '%100',
+                            collapsible: true,
+                            items: [{
+                                    xtype: 'panel',
+                                    region: 'south',
+                                    items: [gridPanel],
+                                    heigth: '100%'
+                                }, {
+                                    xtype: 'panel',
+                                    region: 'center',
+                                    id: 'aptpanel',
+                                    name: 'aptpanel',
+                                    autoScroll: true,
+                                    items: [aptgrid]
+                                }]
+                        },
+                        {
+                            region: 'center',
+                            items: [formPanel]
+                        }]
+                });
+
+                Ext.getCmp('aptpanel').hide();
+
+                Ext.create('Ext.panel.Panel', {
+                    title: "Site Yönetim",
+                    renderTo: 'panel',
+                    width: 1900,
+                    height: 980,
+                    layout: 'border',
+                    header: {
+                        titlePosition: 0,
+                        items: [{
+                                xtype: 'button',
+                                text: 'Geri',
+                                handler: function () {
+                                    window.location = "./index.html";
+                                }
+                            }]
+                    },
+                    items: [container]
+                });
+            });
+        </script>
+        <div id="panel"></div>
+    </body>
+</html>

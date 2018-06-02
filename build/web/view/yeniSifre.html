@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css" 
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <style>
+            #sendPanel {
+                display: flex;
+                justify-content: center;
+                margin-top: 200px;
+            }
+        </style>
+
+        <script type = "text/javascript">
+            Ext.onReady(function () {
+
+                Ext.create('Ext.form.Panel', {
+                    renderTo: 'sendPanel',
+                    title: 'Şifremi Unuttum',
+                    id: 'sendForm',
+                    width: 400,
+                    height: 300,
+                    border: true,
+                    frame: true,
+                    layout: 'vbox',
+                    items: [
+                        {
+                            xtype: 'textfield',
+                            name: 'k_adi',
+                            id: 'k_adi',
+                            width : '100%',
+                            margin: '10 10 10 10',
+                            fieldLabel: 'Kullanıcı Adı'
+                        },
+                        {
+                            xtype: 'textfield',
+                            name: 'sifre',
+                            id: 'sifre',
+                            width: '100%',
+                            margin: '10 10 10 10',
+                            fieldLabel: 'Şifre'
+                        },
+                        {
+                            xtype: 'textfield',
+                            name: 'sifre2',
+                            id: 'sifre2',
+                            width: '100%',
+                            margin: '10 10 10 10',
+                            fieldLabel: 'Şifre Tekrar'
+                        },
+                        {
+                            xtype: 'button',
+                            name: 'sendBtn',
+                            id: 'sendBtn',
+                            margin: '10 10 10 10',
+                            text: 'Güncelle',
+                            listeners: {//Implement listener
+                                click: function () {
+                                   
+                                    if (Ext.getCmp('k_adi').getValue() == "") {
+                                        alert("Kullanıcı adı boş geçilemez!");
+                                        return;
+                                    } else if (Ext.getCmp('sifre').getValue() == "") {
+                                        alert("Sifre boş geçilemez!");
+                                        return;
+                                    } else if (Ext.getCmp('sifre2').getValue() == "") {
+                                        alert("Şifre tekrarı boş geçilemez!");
+                                        return;
+                                    }
+
+                                    if (Ext.getCmp('sifre').getValue() === Ext.getCmp('sifre2').getValue()) {
+
+                                        var form = Ext.getCmp('sendForm');
+                                        var values = form.getValues();//get values from form id
+
+                                        Ext.Ajax.request({
+                                            url: '../rest/service/renewPassword',
+                                            method: 'POST',
+                                            params: {
+                                                k_adi : values.k_adi,
+                                                sifre: values.sifre
+                                            },
+                                            success: function (response) {
+                                                // window.location = "./index.html";
+                                                alert(response.responseText);
+                                                window.location = "./login.html";
+                                            },
+                                            failure: function (response) {
+                                                alert(response.responseText);
+                                            }
+                                        });
+
+                                    }else{
+                                        alert("Şifreler aynı değil!");
+                                    }
+                                }
+                            }
+                        }]
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="sendPanel"></div>
+    </body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css" 
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <style>
+            #sendPanel {
+                display: flex;
+                justify-content: center;
+                margin-top: 200px;
+            }
+        </style>
+
+        <script type = "text/javascript">
+            Ext.onReady(function () {
+
+                Ext.create('Ext.form.Panel', {
+                    renderTo: 'sendPanel',
+                    title: 'Şifremi Unuttum',
+                    id: 'sendForm',
+                    width: 400,
+                    height: 150,
+                    border: true,
+                    frame: true,
+                    layout: 'vbox',
+                    items: [
+
+                        {
+                            xtype: 'textfield',
+                            name: 'email',
+                            id: 'email',
+                            width : '100%',
+                            margin: '10 10 10 10',
+                            fieldLabel: 'Email'
+                        },
+                        {
+                            xtype: 'button',
+                            name: 'sendBtn',
+                            id: 'sendBtn',
+                            margin: '10 10 10 10',
+                            text: 'Gönder',
+                            listeners: {//Implement listener
+                                click: function () {
+
+                                    var reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+
+                                    if (Ext.getCmp('email').getValue() == "") {
+                                        alert("Email boş geçilemez!");
+                                        return;
+                                    } else if (reg.test(Ext.getCmp('email').getValue()) == false) {
+                                        alert("Email hatalı!");
+                                        return;
+                                    }
+
+                                    var form = Ext.getCmp('sendForm');
+                                    var values = form.getValues();//get values from form id
+
+                                    Ext.Ajax.request({
+                                        url: '../rest/service/frgtPassword',
+                                        method: 'POST',
+                                        params: {
+                                            email: values.email
+                                        },
+                                        success: function (response) {
+                                           // window.location = "./index.html";
+                                           alert(response.responseText);
+                                           Ext.getCmp('email').setValue("");
+                                        },
+                                        failure: function (response) {
+                                            alert(response.responseText);
+                                        }
+
+                                    });
+                                }
+                            }
+                        }]
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="sendPanel"></div>
+    </body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css"
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/locale/locale-tr.js"></script>
+    </head>     
+    <body>
+        <script>
+            Ext.onReady(function () {
+
+                ////Telefon numara formatı///////////
+                Ext.apply(Ext.form.VTypes, {
+                    'phoneText': 'Telefon geçerli değil.(xxx) xxx-xxxx formatında olmalı.',
+                    'phoneMask': /[\-\+0-9\(\)\s\.Ext]/,
+                    'phoneRe': /^(\({1}[0-9]{3}\){1}\s{1})([0-9]{3}[-]{1}[0-9]{4})$|^(((\+44)? ?(\(0\))? ?)|(0))( ?[0-9]{3,4}){3}$|^Ext. [0-9]+$/,
+                    'phone': function (v) {
+                        return this.phoneRe.test(v);
+                    }
+                });
+
+                Ext.apply(Ext.util.Format, {
+                    phoneNumber: function (value) {
+                        var phoneNumber = value.replace(/\./g, '').replace(/-/g, '').replace(/[^0-9]/g, '');
+
+                        if (phoneNumber != '' && phoneNumber.length == 10) {
+                            return '(' + phoneNumber.substr(0, 3) + ') ' + phoneNumber.substr(3, 3) + '-' + phoneNumber.substr(6, 4);
+                        } else {
+                            return value;
+                        }
+                    }
+                });
+
+                Ext.namespace('Ext.ux.plugin');
+
+                // Plugin to format a phone number on value change
+                Ext.ux.plugin.FormatPhoneNumber = Ext.extend(Ext.form.TextField, {
+                    init: function (c) {
+                        c.on('change', this.onChange, this);
+                    },
+                    onChange: function (c) {
+                        c.setValue(Ext.util.Format.phoneNumber(c.getValue()));
+                    }
+                });
+
+
+                ////Telefon numara formatı///////////
+
+                var records = [];
+                //create extjs store with empty data
+                var store = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'adi', 'soyadi', 'telefon', 'adres', 'dogum_tarih', 'tc_no', 'brut_maas', 'durum', 'apartman_no'],
+                    data: records,
+                    paging: false
+                });
+                Ext.Ajax.request({
+                    url: '../rest/service/getPersonel',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+
+                        // if we have a valid json object, then process it
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            records.push({'id': jsonResp[i].id, 'adi': jsonResp[i].adi, 'soyadi': jsonResp[i].soyadi, 'telefon': jsonResp[i].telefon, 'adres': jsonResp[i].adres, 'dogum_tarih': jsonResp[i].dogum_tarih, 'tc_no': jsonResp[i].tc_no, 'brut_maas': jsonResp[i].brut_maas, 'durum': jsonResp[i].durum, 'apartman_no': jsonResp[i].apartman_no});
+                        }
+
+                        store.loadData(records);
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+
+
+                /////////////Blok Seçmek İçin////////////////
+
+                var blok = [];
+
+                //create extjs store with empty data
+                var blokStore = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'blok_no'],
+                    data: blok,
+                    paging: false
+                });
+
+
+                Ext.Ajax.request({
+                    url: '../rest/service/getBlok',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            blok.push({'id': jsonResp[i].id, 'blok_no': jsonResp[i].apartman_no});
+                        }
+
+                        blokStore.loadData(blok);
+
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+
+/////////////Blok Seçmek İçin////////////////
+
+
+                var gridPanel = Ext.create('Ext.grid.Panel', {
+                    id: 'gridId',
+                    store: store,
+                    stripeRows: true,
+                    width: 700,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [
+//                                {
+//                                    header: "Id",
+//                                    dataIndex: 'id',
+//                                    flex: .2, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+//                                    sortable: true
+//                                }, 
+                                {
+                                    header: "Adı",
+                                    dataIndex: 'adi',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Soyadı",
+                                    dataIndex: 'soyadi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Telefon",
+                                    dataIndex: 'telefon',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Adres",
+                                    dataIndex: 'adres',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Doğum Tarihi",
+                                    dataIndex: 'dogum_tarih',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Tc Kimlik",
+                                    dataIndex: 'tc_no',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Brüt Maaş",
+                                    dataIndex: 'brut_maas',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Meslek",
+                                    dataIndex: 'durum',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Apartman",
+                                    dataIndex: 'apartman_no',
+                                    flex: .5,
+                                    sortable: true
+                                }],
+                    listeners: {
+                        itemclick: function (dv, record, item, index, e) {
+
+                            Ext.getCmp('id').setValue(record.get('id'));
+                            Ext.getCmp('adi').setValue(record.get('adi'));
+                            Ext.getCmp('soyadi').setValue(record.get('soyadi'));
+                            Ext.getCmp('telefon').setValue(record.get('telefon'));
+                            Ext.getCmp('adres').setValue(record.get('adres'));
+                            Ext.getCmp('dogum_tarih').setValue(record.get('dogum_tarih'));
+                            Ext.getCmp('tc_no').setValue(record.get('tc_no'));
+                            Ext.getCmp('brut_maas').setValue(record.get('brut_maas'));
+//                            Ext.getCmp('durum').setValue(record.get('durum'));
+//                            Ext.getCmp('apartman_no').setValue(record.get('apartman_no'));
+
+                            var durumCombo = Ext.getCmp('durum');
+                            var store = durumCombo.getStore();
+//                            console.log(store.data.items[].data.id);
+                            
+                            for (var i = 0; i < store.data.items.length; i++) {
+                                if (store.data.items[i].data.durum == record.get('durum')) {
+                                    Ext.getCmp('durum').setRawValue(record.get('durum'));
+                                    Ext.getCmp('durum').setValue(store.data.items[i].data.id);
+                                }
+                            }
+
+                            var apartmanCombo = Ext.getCmp('apartman_no');
+                            var apartmanStore = apartmanCombo.getStore();
+                            for (var i = 0; i < apartmanStore.data.items.length; i++) {
+                                if (apartmanStore.data.items[i].data.blok_no == record.get('apartman_no')) {
+                                    Ext.getCmp('apartman_no').setRawValue(record.get('apartman_no'));
+                                    Ext.getCmp('apartman_no').setValue(apartmanStore.data.items[i].data.id);
+                                }
+                            }
+
+                            Ext.getCmp('sbmtBtn').hide();
+
+                            Ext.getCmp('updateBtn').show();
+
+                            Ext.getCmp('clearBtn').show();
+
+                            Ext.getCmp('deleteBtn').show();
+                        }
+                    },
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+                var formPanel = Ext.create('Ext.form.Panel', {//use class for form panel
+                    width: 500,
+                    height: 600,
+                    id: 'prsFrm',
+                    layout: {//define layout types
+                        type: 'vbox',
+                        pack: 'center',
+                        align: 'center'
+                    },
+                    bodyPadding: 5,
+                    items: [
+                        {
+                            xtype: 'container',
+                            width: 300,
+                            layout: {
+                                type: 'vbox',
+                                align: 'stretch'
+                            },
+                            items: [{
+                                    xtype: 'hiddenfield',
+                                    name: 'id',
+                                    id: 'id',
+                                    fieldLabel: 'Id',
+                                    margin: '10 10 10 10',
+                                    readOnly: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'adi',
+                                    id: 'adi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Adı'
+                                }, {
+                                    xtype: 'textfield',
+                                    name: 'soyadi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    id: 'soyadi',
+                                    fieldLabel: 'Soyadı'
+                                }, {
+                                    xtype: 'textfield',
+                                    id: 'telefon',
+                                    name: 'telefon',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Telefon',
+                                    emptyText: '(xxx) xxx-xxxx',
+                                    allowBlank: false,
+                                    vtype: 'phone',
+                                    plugins: new Ext.ux.plugin.FormatPhoneNumber(),
+                                    width: 300,
+                                    maxLength: 14,
+                                    enforceMaxLength: true
+                                }, {
+                                    xtype: 'textareafield',
+                                    id: 'adres',
+                                    name: 'adres',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Adres'
+                                }, {
+                                    xtype: 'datefield',
+                                    name: 'dogum_tarih',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    id: 'dogum_tarih',
+                                    fieldLabel: 'Doğum Tarihi'
+                                }, {
+                                    xtype: 'numberfield',
+                                    id: 'tc_no',
+                                    name: 'tc_no',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Tc Kimlik',
+                                    allowBlank: false,
+                                    minLength: 11,
+                                    maxLength: 11,
+                                    enforceMaxLength: true,
+                                    hideTrigger: true
+                                }, {
+                                    xtype: 'textfield',
+                                    id: 'brut_maas',
+                                    name: 'brut_maas',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Brüt Maaş'
+                                }, {
+                                    xtype: 'combobox',
+                                    id: 'durum',
+                                    name: 'durum',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Meslek',
+                                    store: Ext.create('Ext.data.Store', {
+                                        fields: ['id', 'durum'],
+                                        data: [{
+                                                'id': '4',
+                                                'durum': 'GUVENLİK'
+                                            }, {
+                                                'id': '5',
+                                                'durum': 'KAPICI'
+                                            }, {
+                                                'id': '6',
+                                                'durum': 'YONETİCİ'
+                                            }]
+                                    }),
+                                    valueField: 'id',
+                                    displayField: 'durum'
+                                },
+                                {
+                                    xtype: 'combobox',
+                                    id: 'apartman_no',
+                                    name: 'apartman_no',
+                                    store: blokStore,
+                                    displayField: 'blok_no',
+                                    valueField: 'id',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Apartman No'
+                                }]
+                        },
+                        {
+                            xtype: 'container',
+                            width: 500,
+                            margin: '10 10 10 10',
+                            layout: {
+                                type: 'hbox',
+                                align: 'stretch'
+                            },
+                            items: [
+                                {
+                                    xtype: 'button',
+                                    text: 'Ekle',
+                                    width: 100,
+                                    margin: '10 10 10 210',
+                                    id: 'sbmtBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (Ext.getCmp('adi').getValue() == "") {
+                                                alert("Adı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('soyadi').getValue() == "") {
+                                                alert("Soyadı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('telefon').getValue() == "") {
+                                                alert("Telfon boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('dogum_tarih').getValue() == "") {
+                                                alert("Doğum tarihi boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('tc_no').getValue() == "") {
+                                                alert("Tc no boş geçilemez!");
+                                                return;
+                                            }
+
+                                            var form = Ext.getCmp('prsFrm');
+                                            var values = form.getValues(); //get values from form id
+
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/insertPersonel', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    adi: values.adi,
+                                                    soyadi: values.soyadi,
+                                                    telefon: values.telefon,
+                                                    adres: values.adres,
+                                                    dogum_tarih: values.dogum_tarih,
+                                                    tc_no: values.tc_no,
+                                                    brut_maas: values.brut_maas,
+                                                    durum: values.durum,
+                                                    apartman_no: values.apartman_no
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                }, {
+                                    xtype: 'button',
+                                    text: 'Güncelle',
+                                    width: 100,
+                                    margin: '10 10 10 100',
+                                    id: 'updateBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (Ext.getCmp('adi').getValue() == "") {
+                                                alert("Adı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('soyadi').getValue() == "") {
+                                                alert("Soyadı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('telefon').getValue() == "") {
+                                                alert("Telfon boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('dogum_tarih').getValue() == "") {
+                                                alert("Doğum tarihi boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('tc_no').getValue() == "") {
+                                                alert("Tc no boş geçilemez!");
+                                                return;
+                                            }
+
+                                            var form = Ext.getCmp('prsFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/updatePersonel', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    id: values.id,
+                                                    adi: values.adi,
+                                                    soyadi: values.soyadi,
+                                                    telefon: values.telefon,
+                                                    adres: values.adres,
+                                                    dogum_tarih: values.dogum_tarih,
+                                                    tc_no: values.tc_no,
+                                                    brut_maas: values.brut_maas,
+                                                    durum: values.durum,
+                                                    apartman_no: values.apartman_no
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Sil',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'deleteBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (confirm('Personeli istediğinize emin misiniz?')) {
+
+                                                var form = Ext.getCmp('prsFrm');
+                                                var values = form.getValues(); //get values from form id
+
+                                                Ext.Ajax.request({
+                                                    url: '../rest/service/deletePersonel',
+                                                    method: 'POST',
+                                                    params: {
+                                                        id: values.id
+                                                    },
+                                                    success: function (response) {
+                                                        alert(response.responseText);
+                                                        location.reload();
+                                                    },
+                                                    failure: function (response) {
+                                                        alert(response.responseText);
+                                                    }
+
+                                                });
+                                            } else {
+                                                // Do nothing!
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Temizle',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'clearBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            Ext.getCmp('id').setValue("");
+                                            Ext.getCmp('adi').setValue("");
+                                            Ext.getCmp('soyadi').setValue("");
+                                            Ext.getCmp('telefon').setValue("");
+                                            Ext.getCmp('adres').setValue("");
+                                            Ext.getCmp('dogum_tarih').setValue("");
+                                            Ext.getCmp('tc_no').setValue("");
+                                            Ext.getCmp('brut_maas').setValue("");
+                                            Ext.getCmp('durum').setValue("");
+                                            Ext.getCmp('apartman_no').setValue("");
+
+                                            Ext.getCmp('sbmtBtn').show();
+
+                                            Ext.getCmp('updateBtn').hide();
+
+                                            Ext.getCmp('clearBtn').hide();
+
+                                            Ext.getCmp('deleteBtn').hide();
+
+                                        }
+                                    }
+                                }
+
+                            ]
+                        }]
+                }
+                );
+
+                //Ext.getCmp('sbmtBtn').show();
+
+                Ext.getCmp('updateBtn').hide();
+
+                Ext.getCmp('clearBtn').hide();
+
+                Ext.getCmp('deleteBtn').hide();
+
+                var container = Ext.create('Ext.container.Container', {
+                    layout: 'border',
+                    width: 1920,
+                    height: 980,
+                    items: [{
+                            region: 'west',
+                            width: '%100',
+                            collapsible: true,
+                            items: [gridPanel]
+                        }, {
+                            region: 'center',
+                            items: [formPanel]
+                        }]
+                });
+
+                Ext.create('Ext.panel.Panel', {
+                    title: "Personel Yönetim",
+                    renderTo: 'panel',
+                    width: 1900,
+                    height: 980,
+                    layout: 'border',
+                    header: {
+                        titlePosition: 0,
+                        items: [{
+                                xtype: 'button',
+                                text: 'Geri',
+                                handler: function () {
+                                    window.location = "./index.html";
+                                }
+                            }]
+                    },
+                    items: [container]
+                });
+
+            });
+        </script>
+        <div id="panel"></div>
+    </body>
+</html>

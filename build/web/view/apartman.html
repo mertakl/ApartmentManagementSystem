@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css"
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/locale/locale-tr.js"></script>
+    </head>     
+    <body>
+        <script>
+            Ext.onReady(function () {
+
+                var records = [];
+
+                //create extjs store with empty data
+                var store = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'apartman_no', 'daire_sayisi', 'kat_sayisi', 'asansör_sayisi', 'oturan_sayisi'],
+                    data: records,
+                    paging: false
+                });
+
+
+                Ext.Ajax.request({
+                    url: '../rest/service/getApartman',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            records.push({'id': jsonResp[i].id, 'apartman_no': jsonResp[i].apartman_no, 'daire_sayisi': jsonResp[i].daire_sayisi, 'kat_sayisi': jsonResp[i].kat_sayisi, 'asansör_sayisi': jsonResp[i].asansör_sayisi, 'oturan_sayisi': jsonResp[i].oturan_sayisi});
+                        }
+
+                        store.loadData(records);
+
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+
+                var prsrecords = [];
+
+                //Tıklandığında personeli listele
+
+                //create extjs store with empty data
+                var prsstore = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'adi', 'soyadi', 'telefon', 'adres', 'dogum_tarih', 'tc_no', 'brut_maas', 'durum'],
+                    data: prsrecords,
+                    paging: false
+                });
+
+                function getPersonelById(aptno) {
+
+                    prsrecords = [];
+
+                    Ext.Ajax.request({
+                        url: '../rest/service/getPersonelById/'+aptno+'',
+                        success: function (r) {
+                            //create a json object from the response string
+                            var jsonResp = Ext.decode(r.responseText, true);
+
+                            // if we have a valid json object, then process it
+                            for (var i = 0; i < jsonResp.length; i++) {
+                                prsrecords.push({'id': jsonResp[i].id, 'adi': jsonResp[i].adi, 'soyadi': jsonResp[i].soyadi, 'telefon': jsonResp[i].telefon, 'adres': jsonResp[i].adres, 'dogum_tarih': jsonResp[i].dogum_tarih, 'tc_no': jsonResp[i].tc_no, 'brut_maas': jsonResp[i].brut_maas, 'durum': jsonResp[i].durum});
+                            }
+
+                            prsstore.loadData(prsrecords);
+                        },
+                        failure: function (r) {
+                            alert(r);
+                        }
+                    });
+
+
+                }
+
+                //Tıklandığında personeli listele
+
+
+                var prsgrid = Ext.create('Ext.grid.Panel', {
+                    id: 'prsGrid',
+                    store: prsstore,
+                    stripeRows: true,
+                    width: 700,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [
+//                                {
+//                                    header: "Id",
+//                                    dataIndex: 'id',
+//                                    flex: .2, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+//                                    sortable: true
+//                                }, 
+                                {
+                                    header: "Adı",
+                                    dataIndex: 'adi',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Soyadı",
+                                    dataIndex: 'soyadi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Telefon",
+                                    dataIndex: 'telefon',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Adres",
+                                    dataIndex: 'adres',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Doğum Tarihi",
+                                    dataIndex: 'dogum_tarih',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Tc Kimlik",
+                                    dataIndex: 'tc_no',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Brüt Maaş",
+                                    dataIndex: 'brut_maas',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Meslek",
+                                    dataIndex: 'durum',
+                                    flex: .5,
+                                    sortable: true
+                                }],
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+
+
+                var gridPanel = Ext.create('Ext.grid.Panel', {
+                    id: 'gridId',
+                    store: store,
+                    stripeRows: true,
+                    width: 700,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [
+//                            {
+//                                    header: "Id",
+//                                    dataIndex: 'id',
+//                                    flex: 1, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+//                                    sortable: true
+//                                }, 
+                                {
+                                    header: "Apartman No",
+                                    dataIndex: 'apartman_no',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Daire Sayısı",
+                                    dataIndex: 'daire_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Kat Sayısı",
+                                    dataIndex: 'kat_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Asansör Sayısı",
+                                    dataIndex: 'asansör_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Oturan Sayısı",
+                                    dataIndex: 'oturan_sayisi',
+                                    flex: .5,
+                                    sortable: true
+                                }],
+                    listeners: {
+                        itemclick: function (dv, record, item, index, e) {
+
+                            Ext.getCmp('id').setValue(record.get('id'));
+
+                            Ext.getCmp('apartman_no').setValue(record.get('apartman_no'));
+
+                            Ext.getCmp('daire_sayisi').setValue(record.get('daire_sayisi'));
+
+                            Ext.getCmp('kat_sayisi').setValue(record.get('kat_sayisi'));
+
+                            Ext.getCmp('asansör_sayisi').setValue(record.get('asansör_sayisi'));
+
+                            Ext.getCmp('sbmtBtn').hide();
+
+                            Ext.getCmp('updateBtn').show();
+
+                            Ext.getCmp('clearBtn').show();
+
+                            Ext.getCmp('deleteBtn').show();
+
+                            Ext.getCmp('prsGrid').show();
+                            
+                            getPersonelById(record.get('apartman_no'));
+
+                        }
+                    },
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+
+
+                var formPanel = Ext.create('Ext.form.Panel', {//use class for form panel
+                    width: 500,
+                    height: 300,
+                    id: 'aptFrm',
+                    layout: {//define layout types
+                        type: 'vbox',
+                        pack: 'center',
+                        align: 'center'
+                    },
+                    bodyPadding: 5,
+                    items: [
+                        {
+                            xtype: 'container',
+                            width: 300,
+                            layout: {
+                                type: 'vbox',
+                                align: 'stretch'
+                            },
+                            items: [{
+                                    xtype: 'hiddenfield',
+                                    name: 'id',
+                                    id: 'id',
+                                    fieldLabel: 'Id',
+                                    margin: '10 10 10 10',
+                                    readOnly: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'apartman_no',
+                                    id: 'apartman_no',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Apartman No'
+                                }, {
+                                    xtype: 'numberfield',
+                                    name: 'daire_sayisi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    id: 'daire_sayisi',
+                                    fieldLabel: 'Daire Sayısı',
+                                    hideTrigger: true
+                                }, {
+                                    xtype: 'numberfield',
+                                    id: 'kat_sayisi',
+                                    name: 'kat_sayisi',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Kat Sayısı',
+                                    hideTrigger: true
+                                }, {
+                                    xtype: 'numberfield',
+                                    id: 'asansör_sayisi',
+                                    name: 'asansör_sayisi',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Asansör Sayısı',
+                                    hideTrigger: true
+                                }]
+                        },
+                        {
+                            xtype: 'container',
+                            width: 400,
+                            layout: {
+                                type: 'hbox',
+                                align: 'stretch'
+                            },
+                            items: [
+                                {
+                                    xtype: 'button',
+                                    text: 'Ekle',
+                                    width: 100,
+                                    margin: '10 10 10 160',
+                                    id: 'sbmtBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (Ext.getCmp('apartman_no').getValue() == "") {
+                                                alert("Apartman no boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('daire_sayisi').getValue() == "") {
+                                                alert("Daire sayısı boş geçilemez!");
+                                                return;
+                                            }
+
+                                            var form = Ext.getCmp('aptFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/insertApartman', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    apartman_no: values.apartman_no,
+                                                    daire_sayisi: values.daire_sayisi,
+                                                    kat_sayisi: values.kat_sayisi,
+                                                    asansör_sayisi: values.asansör_sayisi
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Güncelle',
+                                    width: 100,
+                                    margin: '10 10 10 60',
+                                    id: 'updateBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (Ext.getCmp('apartman_no').getValue() == "") {
+                                                alert("Apartman no boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('daire_sayisi').getValue() == "") {
+                                                alert("Daire sayısı boş geçilemez!");
+                                                return;
+                                            }
+
+                                            var form = Ext.getCmp('aptFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/updateApartman', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    id: values.id,
+                                                    apartman_no: values.apartman_no,
+                                                    daire_sayisi: values.daire_sayisi,
+                                                    kat_sayisi: values.kat_sayisi,
+                                                    asansör_sayisi: values.asansör_sayisi
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Sil',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'deleteBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (confirm('Apartmanı silmek istediğinize emin misiniz?')) {
+
+                                                var form = Ext.getCmp('aptFrm');
+                                                var values = form.getValues(); //get values from form id
+
+                                                Ext.Ajax.request({
+                                                    url: '../rest/service/deleteApartman',
+                                                    method: 'POST',
+                                                    params: {
+                                                        id: values.id
+                                                    },
+                                                    success: function (response) {
+                                                        alert(response.responseText);
+                                                        location.reload();
+                                                    },
+                                                    failure: function (response) {
+                                                        alert(response.responseText);
+                                                    }
+
+                                                });
+                                            } else {
+                                                // Do nothing!
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Temizle',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'clearBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            Ext.getCmp('id').setValue("");
+                                            Ext.getCmp('apartman_no').setValue("");
+                                            Ext.getCmp('daire_sayisi').setValue("");
+                                            Ext.getCmp('kat_sayisi').setValue("");
+                                            Ext.getCmp('asansör_sayisi').setValue("");
+
+                                            Ext.getCmp('sbmtBtn').show();
+
+                                            Ext.getCmp('updateBtn').hide();
+
+                                            Ext.getCmp('clearBtn').hide();
+
+                                            Ext.getCmp('deleteBtn').hide();
+                                            
+                                            Ext.getCmp('prsGrid').hide();
+
+                                        }
+                                    }
+                                }
+
+                            ]
+                        }]
+                }
+                );
+
+                Ext.getCmp('updateBtn').hide();
+
+                Ext.getCmp('clearBtn').hide();
+
+                Ext.getCmp('deleteBtn').hide();
+
+                Ext.getCmp('prsGrid').hide();
+
+
+                var container = Ext.create('Ext.container.Container', {
+                    layout: 'border',
+                    width: 1920,
+                    height: 980,
+                    items: [{
+                            region: 'west',
+                            width: '%100',
+                            collapsible: true,
+                            items: [{
+                                    xtype: 'panel',
+                                    region: 'south',
+                                    items: [gridPanel],
+                                    heigth: '100%'
+                                }, {
+                                    xtype: 'panel',
+                                    region: 'center',
+                                    id: 'aptpanel',
+                                    name: 'aptpanel',
+                                    autoScroll: true,
+                                    items: [prsgrid]
+                                }]
+                        }, {
+                            region: 'center',
+                            items: [formPanel]
+                        }]
+                });
+
+                Ext.create('Ext.panel.Panel', {
+                    title: "Apartman Yönetim",
+                    renderTo: 'panel',
+                    width: 1900,
+                    height: 980,
+                    layout: 'border',
+                    header: {
+                        titlePosition: 0,
+                        items: [{
+                                xtype: 'button',
+                                text: 'Geri',
+                                handler: function () {
+                                    window.location = "./index.html";
+                                }
+                            }]
+                    },
+                    items: [container]
+                });
+
+
+            });
+        </script>
+        <div id="panel"></div>
+    </body>
+</html>

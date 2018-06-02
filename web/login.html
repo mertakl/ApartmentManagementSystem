@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css" 
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <style>
+            #loginPanel {
+                display: flex;
+                justify-content: center;
+                margin-top: 200px;
+            }
+        </style>
+
+        <script type = "text/javascript">
+            Ext.onReady(function () {
+
+                Ext.create('Ext.form.Panel', {
+                    renderTo: 'loginPanel',
+                    title: 'Giriş Yap',
+                    id: 'loginForm',
+                    width: 300,
+                    height: 200,
+                    border: true,
+                    frame: true,
+                    layout: 'vbox',
+                    items: [
+                        {
+                            xtype: 'textfield',
+                            name: 'kullanici',
+                            id: 'kullanici',
+                            margin: '10 10 10 10',
+                            fieldLabel: 'Kullanıcı Adı:'
+                        },
+                        {
+                            xtype: 'textfield',
+                            name: 'sifre',
+                            id: 'sifre',
+                            inputType: 'password',
+                            margin: '10 10 10 10',
+                            fieldLabel: 'Şifre:'
+                        },
+                        {
+                            xtype: 'button',
+                            name: 'logBtn',
+                            id: 'logBtn',
+                            margin: '10 10 10 10',
+                            text: 'Giriş Yap',
+                            listeners: {//Implement listener
+                                click: function () {
+
+                                    if (Ext.getCmp('kullanici').getValue() == "") {
+                                        alert("Kullanıcı adı boş geçilemez!");
+                                        return;
+                                    } else if (Ext.getCmp('sifre').getValue() == "") {
+                                        alert("Şifre boş geçilemez!");
+                                        return;
+                                    }
+
+                                    var form = Ext.getCmp('loginForm');
+                                    var values = form.getValues();//get values from form id
+
+                                    Ext.Ajax.request({
+                                        url: './rest/service/login',
+                                        method: 'POST',
+                                        params: {
+                                            uName: values.kullanici, //Bind values with database table field
+                                            uPass: values.sifre,
+                                        },
+                                        success: function () {
+                                            window.location = "./view/index.html";
+                                        },
+                                        failure: function (response) {
+                                            alert(response.responseText);
+                                        }
+
+                                    });
+                                }
+                            }
+                        }],
+                    bbar: [
+                        {
+                            html: 'Şifremi unuttum',
+                            listeners: {
+                                'click': function () {
+                                    window.location.href = './sifreyenile.html';
+                                }
+                            }
+                        }
+                    ]
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="loginPanel"></div>
+    </body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css"
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/locale/locale-tr.js"></script>
+    </head>     
+    <body>
+        <script>
+            Ext.onReady(function () {
+
+                var records = [];
+
+                //create extjs store with empty data
+                var store = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'adi', 'soyadi', 'kullanici_adi', 'sifre', 'email'],
+                    data: records,
+                    paging: false
+                });
+
+
+                Ext.Ajax.request({
+                    url: '../rest/service/getKullanici',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            records.push({'id': jsonResp[i].id, 'adi': jsonResp[i].adi, 'soyadi': jsonResp[i].soyadi, 'kullanici_adi': jsonResp[i].kullanici_adi, 'sifre': jsonResp[i].sifre, 'email': jsonResp[i].email});
+                        }
+
+                        store.loadData(records);
+
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+
+
+
+
+                var gridPanel = Ext.create('Ext.grid.Panel', {
+                    id: 'gridId',
+                    store: store,
+                    stripeRows: true,
+                    width: 500,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [
+//                                {
+//                                    header: "Id",
+//                                    dataIndex: 'id',
+//                                    flex: .2, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+//                                    sortable: true
+//                                }, 
+                                {
+                                    header: "Adı",
+                                    dataIndex: 'adi',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Soyadı",
+                                    dataIndex: 'soyadi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Kullanıcı Adı",
+                                    dataIndex: 'kullanici_adi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Şifre",
+                                    dataIndex: 'sifre',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Email",
+                                    dataIndex: 'email',
+                                    flex: 1,
+                                    sortable: true
+                                }],
+                    listeners: {
+                        itemclick: function (dv, record, item, index, e) {
+
+                            Ext.getCmp('id').setValue(record.get('id'));
+
+                            Ext.getCmp('adi').setValue(record.get('adi'));
+
+                            Ext.getCmp('soyadi').setValue(record.get('soyadi'));
+
+                            Ext.getCmp('kullanici_adi').setValue(record.get('kullanici_adi'));
+
+                            Ext.getCmp('sifre').setValue(record.get('sifre'));
+
+                            Ext.getCmp('email').setValue(record.get('email'));
+
+                            Ext.getCmp('sbmtBtn').hide();
+
+                            Ext.getCmp('updateBtn').show();
+
+                            Ext.getCmp('clearBtn').show();
+
+                            Ext.getCmp('deleteBtn').show();
+
+                        }
+                    },
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+
+
+                var formPanel = Ext.create('Ext.form.Panel', {//use class for form panel
+                    width: 500,
+                    height: 500,
+                    id: 'kFrm',
+                    layout: {//define layout types
+                        type: 'vbox',
+                        pack: 'center',
+                        align: 'center'
+                    },
+                    bodyPadding: 5,
+                    items: [
+                        {
+                            xtype: 'container',
+                            width: 300,
+                            layout: {
+                                type: 'vbox',
+                                align: 'stretch'
+                            },
+                            items: [{
+                                    xtype: 'hiddenfield',
+                                    name: 'id',
+                                    id: 'id',
+                                    fieldLabel: 'Id',
+                                    margin: '10 10 10 10',
+                                    readOnly: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'adi',
+                                    id: 'adi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Adı'
+                                }, {
+                                    xtype: 'textfield',
+                                    name: 'soyadi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    id: 'soyadi',
+                                    fieldLabel: 'Soyadı'
+                                }, {
+                                    xtype: 'textfield',
+                                    allowBlank: false,
+                                    id: 'kullanici_adi',
+                                    name: 'kullanici_adi',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Kullanıcı Adı'
+                                }, {
+                                    xtype: 'textfield',
+                                    allowBlank: false,
+                                    id: 'sifre',
+                                    name: 'sifre',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Şifre'
+                                }, {
+                                    xtype: 'textfield',
+                                    allowBlank: false,
+                                    id: 'email',
+                                    name: 'email',
+                                    vtype: 'email',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Email'
+                                }]
+                        },
+                        {
+                            xtype: 'container',
+                            width: 500,
+                            margin: '10 10 10 10',
+                            layout: {
+                                type: 'hbox',
+                                align: 'stretch'
+                            },
+                            items: [
+                                {
+                                    xtype: 'button',
+                                    text: 'Ekle',
+                                    width: 100,
+                                    margin: '10 10 10 210',
+                                    id: 'sbmtBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+                                            
+                                            var reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+
+                                            if (Ext.getCmp('adi').getValue() == "") {
+                                                alert("Kullanıcının ismi boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('soyadi').getValue() == "") {
+                                                alert("Kullanıcı soyadı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('kullanici_adi').getValue() == "") {
+                                                alert("Kullanıcı adı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('sifre').getValue() == "") {
+                                                alert("Kullanıcı şifre boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('email').getValue() == "") {
+                                                alert("Kullanıcı emaili boş geçilemez!");
+                                                return;
+                                            }else if(reg.test(Ext.getCmp('email').getValue()) == false){
+                                                alert("Email hatalı!");
+                                                return;
+                                            }
+
+                                            
+                                            
+                                                    
+
+
+                                            var form = Ext.getCmp('kFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/insertKullanici', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    adi: values.adi,
+                                                    soyadi: values.soyadi,
+                                                    kullanici_adi: values.kullanici_adi,
+                                                    sifre: values.sifre,
+                                                    email: values.email
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                }, {
+                                    xtype: 'button',
+                                    text: 'Güncelle',
+                                    width: 100,
+                                    margin: '10 10 10 100',
+                                    id: 'updateBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+                                            var form = Ext.getCmp('kFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/updateKullanici', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    id: values.id,
+                                                    adi: values.adi,
+                                                    soyadi: values.soyadi,
+                                                    kullanici_adi: values.kullanici_adi,
+                                                    sifre: values.sifre,
+                                                    email: values.email
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Sil',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'deleteBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (confirm('Kullanıcıyı silmek istediğinize emin misiniz?')) {
+
+                                                var form = Ext.getCmp('kFrm');
+                                                var values = form.getValues(); //get values from form id
+
+                                                Ext.Ajax.request({
+                                                    url: '../rest/service/deleteKullanici',
+                                                    method: 'POST',
+                                                    params: {
+                                                        id: values.id
+                                                    },
+                                                    success: function (response) {
+                                                        alert(response.responseText);
+                                                        location.reload();
+                                                    },
+                                                    failure: function (response) {
+                                                        alert(response.responseText);
+                                                    }
+
+                                                });
+                                            } else {
+                                                // Do nothing!
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Temizle',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'clearBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            Ext.getCmp('id').setValue("");
+                                            Ext.getCmp('adi').setValue("");
+                                            Ext.getCmp('soyadi').setValue("");
+                                            Ext.getCmp('kullanici_adi').setValue("");
+                                            Ext.getCmp('sifre').setValue("");
+                                            Ext.getCmp('email').setValue("");
+
+                                            Ext.getCmp('sbmtBtn').show();
+
+                                            Ext.getCmp('updateBtn').hide();
+
+                                            Ext.getCmp('clearBtn').hide();
+
+                                            Ext.getCmp('deleteBtn').hide();
+                                        }
+                                    }
+                                }
+
+                            ]
+                        }]
+                }
+                );
+
+                Ext.getCmp('updateBtn').hide();
+
+                Ext.getCmp('clearBtn').hide();
+
+                Ext.getCmp('deleteBtn').hide();
+
+
+                var container = Ext.create('Ext.container.Container', {
+                    layout: 'border',
+                    width: 1920,
+                    height: 980,
+                    items: [{
+                            region: 'west',
+                            width: '%100',
+                            collapsible: true,
+                            items: [gridPanel]
+                        }, {
+                            region: 'center',
+                            items: [formPanel]
+                        }]
+                });
+
+                Ext.create('Ext.panel.Panel', {
+                    title: "Kullanıcı Yönetim",
+                    renderTo: 'panel',
+                    width: 1900,
+                    height: 980,
+                    layout: 'border',
+                    header: {
+                        titlePosition: 0,
+                        items: [{
+                                xtype: 'button',
+                                text: 'Geri',
+                                handler: function () {
+                                    window.location = "./index.html";
+                                }
+                            }]
+                    },
+                    items: [container]
+                });
+
+            });
+        </script>
+        <div id="panel"></div>
+    </body>
+</html>

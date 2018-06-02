@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link href = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/theme-classic/resources/theme-classic-all.css"
+              rel = "stylesheet" />
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/ext-all.js"></script>
+        <script type = "text/javascript" 
+        src = "https://cdnjs.cloudflare.com/ajax/libs/extjs/6.0.0/classic/locale/locale-tr.js"></script>
+    </head>     
+    <body>
+        <script>
+            Ext.onReady(function () {
+
+                ////Telefon numara formatı///////////
+                Ext.apply(Ext.form.VTypes, {
+                    'phoneText': 'Telefon geçerli değil.(xxx) xxx-xxxx formatında olmalı.',
+                    'phoneMask': /[\-\+0-9\(\)\s\.Ext]/,
+                    'phoneRe': /^(\({1}[0-9]{3}\){1}\s{1})([0-9]{3}[-]{1}[0-9]{4})$|^(((\+44)? ?(\(0\))? ?)|(0))( ?[0-9]{3,4}){3}$|^Ext. [0-9]+$/,
+                    'phone': function (v) {
+                        return this.phoneRe.test(v);
+                    }
+                });
+
+                Ext.apply(Ext.util.Format, {
+                    phoneNumber: function (value) {
+                        var phoneNumber = value.replace(/\./g, '').replace(/-/g, '').replace(/[^0-9]/g, '');
+
+                        if (phoneNumber != '' && phoneNumber.length == 10) {
+                            return '(' + phoneNumber.substr(0, 3) + ') ' + phoneNumber.substr(3, 3) + '-' + phoneNumber.substr(6, 4);
+                        } else {
+                            return value;
+                        }
+                    }
+                });
+
+                Ext.namespace('Ext.ux.plugin');
+
+                // Plugin to format a phone number on value change
+                Ext.ux.plugin.FormatPhoneNumber = Ext.extend(Ext.form.TextField, {
+                    init: function (c) {
+                        c.on('change', this.onChange, this);
+                    },
+                    onChange: function (c) {
+                        c.setValue(Ext.util.Format.phoneNumber(c.getValue()));
+                    }
+                });
+
+/////////////////////////////////
+
+                var records = [];
+
+                //create extjs store with empty data
+                var store = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'adi', 'soyadi', 'gtar', 'gsaat', 'ctar', 'csaat', 'telefon', 'plaka', 'daire_no', 'apartman_no'],
+                    data: records,
+                    paging: false
+                });
+
+
+                Ext.Ajax.request({
+                    url: '../rest/service/getMisafir',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            records.push({'id': jsonResp[i].id, 'adi': jsonResp[i].adi, 'soyadi': jsonResp[i].soyadi, 'gtar': jsonResp[i].gtar, 'gsaat': jsonResp[i].gsaat, 'ctar': jsonResp[i].ctar, 'csaat': jsonResp[i].csaat, 'telefon': jsonResp[i].telefon, 'plaka': jsonResp[i].plaka, 'daire_no': jsonResp[i].daire_no, 'apartman_no': jsonResp[i].apartman_no});
+                        }
+
+                        store.loadData(records);
+
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+
+/////////////Blok Seçmek İçin////////////////
+
+                var blok = [];
+
+                //create extjs store with empty data
+                var blokStore = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'blok_no'],
+                    data: blok,
+                    paging: false
+                });
+
+
+                Ext.Ajax.request({
+                    url: '../rest/service/getBlok',
+                    success: function (r) {
+                        //create a json object from the response string
+                        var jsonResp = Ext.decode(r.responseText, true);
+                        // if we have a valid json object, then process it
+
+                        for (var i = 0; i < jsonResp.length; i++) {
+                            blok.push({'id': jsonResp[i].id, 'blok_no': jsonResp[i].apartman_no});
+                        }
+
+                        blokStore.loadData(blok);
+
+                    },
+                    failure: function (r) {
+                        alert(r);
+                    }
+                });
+
+/////////////Blok Seçmek İçin////////////////
+
+                var daire = [];
+
+                //create extjs store with empty data
+                var daireStore = Ext.create('Ext.data.Store', {
+                    fields: ['id', 'daire_no'],
+                    data: daire,
+                    paging: false
+                });
+
+/////////Daire Getirmek için ///////////
+                function getDaire(input) {
+
+                    Ext.Ajax.request({
+                        url: '../rest/service/getDaire/' + input + '',
+                        success: function (r) {
+                            //create a json object from the response string
+                            var jsonResp = Ext.decode(r.responseText, true);
+                            // if we have a valid json object, then process it
+
+                            for (var i = 0; i < jsonResp.length; i++) {
+                                daire.push({'id': jsonResp[i].id, 'daire_no': jsonResp[i].daire_no});
+                            }
+
+                            daireStore.loadData(daire);
+                            
+                            daire = [];
+
+                        },
+                        failure: function (r) {
+                            alert(r);
+                        }
+                    });
+
+                    return daire;
+
+                }
+/////////Daire Getirmek için ///////////
+
+
+                var gridPanel = Ext.create('Ext.grid.Panel', {
+                    id: 'gridId',
+                    store: store,
+                    stripeRows: true,
+                    width: 700,
+                    enableColumnMove: true, // property which allows column to move to different position by dragging that column.
+                    enableColumnResize: true, // property which allows to resize column run time.
+
+                    columns:
+                            [
+//                        {
+//                                    header: "Id",
+//                                    dataIndex: 'id',
+//                                    flex: 1, // property defines the amount of space this column is going to take in the grid container with respect to all.	
+//                                    sortable: true
+//                                }, 
+                                {
+                                    header: "Adı",
+                                    dataIndex: 'adi',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Soyadı",
+                                    dataIndex: 'soyadi',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Giriş Tarih",
+                                    dataIndex: 'gtar',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Giriş Saat",
+                                    dataIndex: 'gsaat',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Çıkış Tarih",
+                                    dataIndex: 'ctar',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Çıkış Saat",
+                                    dataIndex: 'csaat',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Telefon",
+                                    dataIndex: 'telefon',
+                                    flex: .5,
+                                    sortable: true
+                                }, {
+                                    header: "Plaka",
+                                    dataIndex: 'plaka',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Daire No",
+                                    dataIndex: 'daire_no',
+                                    flex: .5,
+                                    sortable: true
+                                },
+                                {
+                                    header: "Apartman No",
+                                    dataIndex: 'apartman_no',
+                                    flex: .5,
+                                    sortable: true
+                                }],
+                    listeners: {
+                        itemclick: function (dv, record, item, index, e) {
+
+                            Ext.getCmp('id').setValue(record.get('id'));
+
+                            Ext.getCmp('adi').setValue(record.get('adi'));
+
+                            Ext.getCmp('soyadi').setValue(record.get('soyadi'));
+
+//                            Ext.getCmp('etar').setValue(record.get('etar'));
+
+                            Ext.getCmp('daire_no').setValue(record.get('daire_no'));
+
+                            Ext.getCmp('apartman_no').setValue(record.get('apartman_no'));
+
+//                            Ext.getCmp('gtar').setValue(record.get('gtar'));
+//
+//                            Ext.getCmp('gsaat').setValue(record.get('gsaat'));
+//
+//                            Ext.getCmp('ctar').setValue(record.get('ctar'));
+//
+//                            Ext.getCmp('csaat').setValue(record.get('csaat'));
+
+                            Ext.getCmp('telefon').setValue(record.get('telefon'));
+
+                            Ext.getCmp('plaka').setValue(record.get('plaka'));
+
+                            Ext.getCmp('sbmtBtn').hide();
+
+                            Ext.getCmp('clearBtn').show();
+
+                            Ext.getCmp('deleteBtn').show();
+
+                            if (record.get('ctar') === undefined) {
+
+                                Ext.getCmp('exitBtn').show();
+                                
+                            }
+                        }
+                    },
+                    dockedItems: [{
+                            xtype: 'pagingtoolbar',
+                            store: store, // same store GridPanel is using
+                            pageSize: 25,
+                            dock: 'bottom',
+                            displayInfo: true
+                        }]
+
+                });
+
+
+                var formPanel = Ext.create('Ext.form.Panel', {//use class for form panel
+                    width: 500,
+                    height: 500,
+                    id: 'mFrm',
+                    layout: {//define layout types
+                        type: 'vbox',
+                        pack: 'center',
+                        align: 'center'
+                    },
+                    bodyPadding: 5,
+                    items: [
+                        {
+                            xtype: 'container',
+                            width: 300,
+                            layout: {
+                                type: 'vbox',
+                                align: 'stretch'
+                            },
+                            items: [{
+                                    xtype: 'hiddenfield',
+                                    name: 'id',
+                                    id: 'id',
+                                    fieldLabel: 'Id',
+                                    margin: '10 10 10 10',
+                                    readOnly: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'adi',
+                                    id: 'adi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Adı'
+                                }, {
+                                    xtype: 'textfield',
+                                    name: 'soyadi',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    id: 'soyadi',
+                                    fieldLabel: 'Soyadı'
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    id: 'telefon',
+                                    name: 'telefon',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Telefon',
+                                    emptyText: '(xxx) xxx-xxxx',
+                                    vtype: 'phone',
+                                    plugins: new Ext.ux.plugin.FormatPhoneNumber(),
+                                    width: 300,
+                                    maxLength: 14,
+                                    enforceMaxLength: true
+                                },
+                                {
+                                    xtype: 'textfield',
+                                    name: 'plaka',
+                                    allowBlank: false,
+                                    margin: '10 10 10 10',
+                                    id: 'plaka',
+                                    fieldLabel: 'Plaka'
+                                },
+                                {
+                                    xtype: 'combobox',
+                                    id: 'apartman_no',
+                                    name: 'apartman_no',
+                                    store: blokStore,
+                                    displayField: 'blok_no',
+                                    valueField: 'id',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Apartman No',
+                                    listeners: {
+                                        'select': function (combo, value, index) {
+                                            var input = combo.getValue();
+
+                                            var daireCombo = Ext.getCmp('daire_no');
+
+                                            daireCombo.clearValue();
+
+                                            getDaire(input);
+
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'combobox',
+                                    id: 'daire_no',
+                                    name: 'daire_no',
+                                    store: daireStore,
+                                    displayField: 'daire_no',
+                                    valueField: 'id',
+                                    margin: '10 10 10 10',
+                                    fieldLabel: 'Daire No'
+                                }]
+                        },
+                        {
+                            xtype: 'container',
+                            width: 350,
+                            margin: '10 10 10 10',
+                            layout: {
+                                type: 'hbox',
+                                align: 'stretch'
+                            },
+                            items: [
+                                {
+                                    xtype: 'button',
+                                    text: 'Ekle',
+                                    width: 100,
+                                    margin: '10 10 10 150',
+                                    id: 'sbmtBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (Ext.getCmp('adi').getValue() == "") {
+                                                alert("Misafir adı boş geçilemez!");
+                                                return;
+                                            } else if (Ext.getCmp('soyadi').getValue() == "") {
+                                                alert("Misafir soyadı boş geçilemez!");
+                                                return;
+                                            }
+
+                                            var form = Ext.getCmp('mFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/insertMisafir', //Defined path of function defined in MVC 
+                                                method: 'POST',
+                                                params: {
+                                                    adi: values.adi,
+                                                    soyadi: values.soyadi,
+                                                    etar: values.etar,
+                                                    daire_no: values.daire_no,
+                                                    telefon: values.telefon,
+                                                    plaka: values.plaka
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+                                        }
+                                    }
+                                }, //{
+//                                    xtype: 'button',
+//                                    text: 'Güncelle',
+//                                    width: 100,
+//                                    margin: '10 10 10 10',
+//                                    id: 'updateBtn',
+//                                    listeners: {//Implement listener
+//                                        click: function () {
+//                                            var form = Ext.getCmp('mFrm');
+//                                            var values = form.getValues(); //get values from form id
+//
+//                                            Ext.Ajax.request({
+//                                                url: 'http://localhost:8080/SiteYonetim/rest/service/updateMisafir', //Defined path of function defined in MVC 
+//                                                method: 'POST',
+//                                                params: {
+//                                                    id: values.id,
+//                                                    adi: values.adi,
+//                                                    soyadi: values.soyadi,
+//                                                    etar: values.kat_sayisi,
+//                                                    daire_no: values.asansör_sayisi,
+//                                                    apartman_no: values.apartman_no
+//                                                },
+//                                                success: function (response) {
+//                                                    alert(response.responseText);
+//                                                    location.reload();
+//                                                },
+//                                                failure: function (response) {
+//                                                    alert(response.responseText);
+//                                                }
+//
+//                                            });
+//                                        }
+//                                    }
+//                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Sil',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'deleteBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            if (confirm('Misafiri silmek istediğinize emin misiniz?')) {
+
+                                                var form = Ext.getCmp('mFrm');
+                                                var values = form.getValues(); //get values from form id
+
+                                                Ext.Ajax.request({
+                                                    url: '../rest/service/deleteMisafir',
+                                                    method: 'POST',
+                                                    params: {
+                                                        id: values.id
+                                                    },
+                                                    success: function (response) {
+                                                        alert(response.responseText);
+                                                        location.reload();
+                                                    },
+                                                    failure: function (response) {
+                                                        alert(response.responseText);
+                                                    }
+
+                                                });
+                                            } else {
+                                                // Do nothing!
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Çıkış Yap',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'exitBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            var form = Ext.getCmp('mFrm');
+                                            var values = form.getValues(); //get values from form id
+
+                                            Ext.Ajax.request({
+                                                url: '../rest/service/exitMisafir',
+                                                method: 'POST',
+                                                params: {
+                                                    id: values.id
+                                                },
+                                                success: function (response) {
+                                                    alert(response.responseText);
+                                                    location.reload();
+                                                },
+                                                failure: function (response) {
+                                                    alert(response.responseText);
+                                                }
+
+                                            });
+
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'button',
+                                    text: 'Temizle',
+                                    width: 100,
+                                    margin: '10 10 10 10',
+                                    id: 'clearBtn',
+                                    listeners: {//Implement listener
+                                        click: function () {
+
+                                            Ext.getCmp('id').setValue("");
+                                            Ext.getCmp('adi').setValue("");
+                                            Ext.getCmp('soyadi').setValue("");
+                                            Ext.getCmp('daire_no').setValue("");
+                                            Ext.getCmp('apartman_no').setValue("");
+                                            Ext.getCmp('telefon').setValue("");
+                                            Ext.getCmp('plaka').setValue("");
+
+                                            Ext.getCmp('sbmtBtn').show();
+
+                                            Ext.getCmp('clearBtn').hide();
+
+                                            Ext.getCmp('deleteBtn').hide();
+
+                                            Ext.getCmp('exitBtn').hide();
+
+                                        }
+                                    }
+                                }
+
+                            ]
+                        }]
+                }
+                );
+
+                Ext.getCmp('exitBtn').hide();
+
+                Ext.getCmp('clearBtn').hide();
+
+                Ext.getCmp('deleteBtn').hide();
+
+                var container = Ext.create('Ext.container.Container', {
+                    layout: 'border',
+                    width: 1920,
+                    height: 980,
+                    items: [{
+                            region: 'west',
+                            width: '%100',
+                            collapsible: true,
+                            items: [gridPanel]
+                        }, {
+                            region: 'center',
+                            items: [formPanel]
+                        }]
+                });
+
+                Ext.create('Ext.panel.Panel', {
+                    title: "Misafir Yönetim",
+                    renderTo: 'panel',
+                    width: 1900,
+                    height: 980,
+                    layout: 'border',
+                    header: {
+                        titlePosition: 0,
+                        items: [{
+                                xtype: 'button',
+                                text: 'Geri',
+                                handler: function () {
+                                    window.location = "./index.html";
+                                }
+                            }]
+                    },
+                    items: [container]
+                });
+
+
+            });
+        </script>
+        <div id="panel"></div>
+    </body>
+</html>
